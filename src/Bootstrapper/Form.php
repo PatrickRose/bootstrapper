@@ -1,729 +1,503 @@
 <?php
+
 namespace Bootstrapper;
 
-use \HTML;
+use Illuminate\Html\FormBuilder;
 
 /**
- * Form methods for creating Twitter Bootstrap forms.
+ * Creates Bootstrap 3 compliant forms
  *
- * @category   HTML/UI
- * @package    Boostrapper
- * @subpackage Twitter
- * @author     Patrick Talmadge - <ptalmadge@gmail.com>
- * @author     Maxime Fabre - <ehtnam6@gmail.com>
- * @license    MIT License <http://www.opensource.org/licenses/mit>
- * @link       http://laravelbootstrapper.phpfogapp.com/
- *
- * @see        http://twitter.github.com/bootstrap/
+ * @package Bootstrapper
  */
-class Form extends \Laravel\Form
+class Form extends FormBuilder
 {
-    /**
-     * Default - not required, left-aligned labels on top of controls
-     */
-    const TYPE_VERTICAL   = 'form-vertical';
 
     /**
-     * Right-aligned labels controls are on the same line.
-     * This requires the control-group container.
-     * @see control_group($label, $control, $group_class = '', $help = null)
+     * Constant for horizontal forms
      */
-    const TYPE_HORIZONTAL = 'form-horizontal';
+    const FORM_HORIZONTAL = 'form-horizontal';
 
     /**
-     * Left-aligned labels and inline controls for small forms
+     * Constant for inline forms
      */
-    const TYPE_INLINE     = 'form-inline';
+    const FORM_INLINE = 'form-inline';
 
     /**
-     * Adds extra roundind to text input fields
+     * Constant for success
      */
-    const TYPE_SEARCH     = 'form-search';
+    const FORM_SUCCESS = 'has-success';
 
     /**
-     * Display types
+     * Constant for warnings
      */
-    const NORMAL  = '';
-    const WARNING = 'warning';
-    const ERROR   = 'error';
-    const SUCCESS = 'success';
+    const FORM_WARNING = 'has-warning';
 
     /**
-     * Function adds the given value to the attribute of for the provided HTML.
+     * Constant for errors
+     */
+    const FORM_ERROR = 'has-error';
+
+    /**
+     * Constant for large inputs
+     */
+    const INPUT_LARGE = 'input-lg';
+
+    /**
+     * Constant for form controllers
+     */
+    const FORM_CONTROL = 'form-control';
+
+    /**
+     * Constant for labels
+     */
+    const LABEL = 'control-label';
+
+    /**
+     * {@inheritdoc}
+     */
+    public function submit($value = null, $options = array())
+    {
+        $options['class'] = isset($options['class']) ?
+            'btn ' . Button::NORMAL . ' ' . $options['class'] :
+            'btn ' . Button::NORMAL;
+        return parent::submit($value, $options);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function label($name, $value = null, $options = array())
+    {
+        $options['class'] = isset($options['class']) ?
+            self::LABEL . ' ' . $options['class'] :
+            self::LABEL;
+
+        return parent::label($name, $value, $options);
+    }
+
+    /**
+     * Opens an inline form
      *
-     * @param string $attr  attribute string
-     * @param string $value value to add to attribute string
-     * @param string $html  html to search for attribute
-     *
+     * @param array $attributes The attributes of the array
      * @return string
      */
-    protected static function add_attribute($attr, $value, $html)
+    function inline($attributes = [])
     {
-        $_attr = $attr.'=';
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_INLINE . ' ' . $attributes['class'] :
+            self::FORM_INLINE;
 
-        $attr_pos =  strpos($html, $_attr);
-        if ($attr_pos === false) {
-            $str_pos =  strpos($html, ' ') + 1;
-            $html = substr_replace($html, $_attr.'"'.$value.'" ', $str_pos,  0);
-        } else {
-            $start = $attr_pos + strlen($_attr) + 1;
-            $end = strpos($html, '"', $start);
-
-            $classes = substr($html, $start, $end - $start);
-            if (strpos($classes, $value) === false) {
-                $html = str_replace($classes, $value.' '.$classes,  $html);
-            }
-        }
-
-        return $html;
+        return $this->open($attributes);
     }
 
     /**
-     * Checks call to see if we can create an input from a magic call (for you wizards).
-     * large_text, xlarge_textarea, small_number, etc...
+     * Opens a horizontal form
      *
-     * @param string $method     Name of missing method
-     * @param array  $parameters array of parameters passed to missing method
-     *
-     * @return mixed
-     */
-    protected static function magic_input($method, $parameters)
-    {
-        //.input-
-        //$sizes = array('mini' , 'small', 'medium', 'large', 'xlarge', 'xxlarge');
-        $types = array('input', 'text', 'password', 'uneditable', 'select', 'multiselect', 'file', 'textarea', 'date', 'number', 'url', 'telephone', 'email', 'search');
-
-        $method_array = explode('_', strtolower($method));
-        $type_found = array_intersect($method_array, $types);
-
-        if (count($type_found) > 0) {
-            $function = $type_found[key($type_found)];
-            $attr_index = 0;
-
-            switch ($function) {
-            case 'password':
-            case 'file':
-            case 'uneditable':
-                // password($name, $attributes = array())
-                // Set attributes array and call function
-                $attr_index = 1;
-                break;
-            case 'input':
-                // input($type, $name, $value = null, $attributes = array())
-                // Set defaults and attributes array and call function
-                if (!isset($parameters[2])) $parameters[2] = null;
-                $attr_index = 3;
-                break;
-            case 'select':
-            case 'multiselect':
-                // select($name, $options = array(), $selected = null, $attributes = array())
-                // Set defaults and attributes array and call function
-                if (!isset($parameters[1])) $parameters[1] = array();
-                if (!isset($parameters[2])) $parameters[2] = null;
-                $attr_index = 3;
-                break;
-            case 'textarea':
-                // textarea($name, $value = '', $attributes = array())
-                // Covers all the other methods
-                if (!isset($parameters[1])) $parameters[1] = '';
-                $attr_index = 2;
-                break;
-            default:
-                // text($name, $value = null, $attributes = array())
-                // Covers all the other methods
-                if (!isset($parameters[1])) $parameters[1] = null;
-                $attr_index = 2;
-                break;
-            }
-            $parameters = Helpers::set_multi_class_attributes($function, $method_array, $parameters, $attr_index, 'input-', 'span');
-
-            return call_user_func_array('static::'.$function, $parameters);
-        }
-    }
-
-    /**
-     * Open a HTML form styled for search.
-     *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param array $attributes
      * @return string
      */
-    public static function search_open($action = null, $method = 'POST', $attributes = array(), $https = null)
+    function horizontal($attributes = [])
     {
-        $attributes = Helpers::add_class($attributes, Form::TYPE_SEARCH);
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_HORIZONTAL . ' ' . $attributes['class'] :
+            self::FORM_HORIZONTAL;
 
-        return static::open($action, $method, $attributes, $https);
+        return $this->open($attributes);
     }
 
     /**
-     * Open a secure HTML form styled for search.
+     * Creates a validation block
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $type       The type of validation
+     * @param string $label      The label
+     * @param string $input      The input
+     * @param array  $attributes The attributes of the validation block
      * @return string
      */
-    public static function search_open_secure($action = null, $method = 'POST', $attributes = array())
+    public function validation($type, $label, $input, $attributes = [])
     {
-        return static::search_open($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ?
+            "form-group {$type} " . $attributes['class'] :
+            "form-group {$type} ";
+        $attributes = new Attributes($attributes);
+
+        return "<div {$attributes}>{$label}{$input}</div>";
     }
 
     /**
-     * Open a HTML form for file upload styled for search.
+     * Creates a success validation block
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
+     * @param string $label      The label
+     * @param string $input      The input
+     * @param array  $attributes The attributes of the validation block
+     * @return string
+     * @see Bootstrapper\\Form::validation()
+     */
+    public function success($label, $input, $attributes = [])
+    {
+        return ($this->validation(
+            self::FORM_SUCCESS,
+            $label,
+            $input,
+            $attributes
+        ));
+    }
+
+    /**
+     * Creates a warning validation block
      *
+     * @param string $label      The label
+     * @param string $input      The input
+     * @param array  $attributes The attributes of the validation block
+     * @return string
+     * @see Bootstrapper\\Form::validation()
+     */
+    public function warning($label, $input, $attributes = [])
+    {
+        return ($this->validation(
+            Form::FORM_WARNING,
+            $label,
+            $input,
+            $attributes
+        ));
+    }
+
+    /**
+     * Creates an error validation block
+     *
+     * @param string $label      The label
+     * @param string $input      The input
+     * @param array  $attributes The attributes of the validation block
+     * @return string
+     * @see Bootstrapper\\Form::validation()
+     */
+    public function error($label, $input, $attributes = [])
+    {
+        return ($this->validation(
+            Form::FORM_ERROR,
+            $label,
+            $input,
+            $attributes
+        ));
+    }
+
+    /**
+     * Creates a feedback block with an icon
+     *
+     * @param string $label      The label
+     * @param string $input      The input
+     * @param string $icon       The icon
+     * @param array  $attributes The attributes of the block
      * @return string
      */
-    public static function search_open_for_files($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function feedback($label, $input, $icon, $attributes = [])
     {
-        $attributes['enctype'] = 'multipart/form-data';
+        $attributes['class'] = isset($attributes['class']) ?
+            'form-group has-feedback ' . $attributes['class'] :
+            'form-group has-feedback';
+        $attributes = new Attributes($attributes);
 
-        return static::search_open($action, $method, $attributes, $https);
+        return "<div {$attributes}>{$label}{$input}<span class='glyphicon glyphicon-{$icon} form-control-feedback'></span></div>";
     }
 
     /**
-     * Open a secure HTML form for file upload styled for search.
+     * Creates a help block
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $helpText The help text
+     * @param array  $attributes
      * @return string
      */
-    public static function search_open_secure_for_files($action = null, $method = 'POST', $attributes = array())
+    public function help($helpText, $attributes = [])
     {
-        return static::search_open_for_files($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ?
+            'help-block ' . $attributes['class'] :
+            'help-block';
+        $attributes = new Attributes($attributes);
+
+        return "<span {$attributes}>{$helpText}</span>";
     }
 
     /**
-     * Open a HTML form styled as an inline form.
+     * Opens a horizontal form with a given model
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
+     * @param mixed $model
+     * @param array $attributes
+     * @return string
+     * @see Bootstrapper\Form::horizontal()
+     * @see Illuminate\Html::model()
+     */
+    public function horizontalModel($model, $attributes = [])
+    {
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_HORIZONTAL . ' ' . $attributes['class'] :
+            self::FORM_HORIZONTAL;
+
+        return $this->model($model, $attributes);
+    }
+
+    /**
+     * Opens a inline form with a given model
      *
+     * @param mixed $model
+     * @param array $attributes
+     * @return string
+     * @see Bootstrapper\Form::inline()
+     * @see Illuminate\Html::model()
+     */
+    public function inlineModel($model, $attributes = [])
+    {
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_INLINE . ' ' . $attributes['class'] :
+            self::FORM_INLINE;
+
+        return $this->model($model, $attributes);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @param string $name
+     * @param array  $list
+     * @param null   $selected
+     * @param array  $attributes
      * @return string
      */
-    public static function inline_open($action = null, $method = 'POST', $attributes = array(), $https = null)
-    {
-        $attributes = Helpers::add_class($attributes, Form::TYPE_INLINE);
+    public function select(
+        $name,
+        $list = array(),
+        $selected = null,
+        $attributes = array()
+    ) {
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_CONTROL . ' ' . $attributes['class'] :
+            self::FORM_CONTROL;
 
-        return static::open($action, $method, $attributes, $https);
+        return parent::select($name, $list, $selected, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled as an inline form.
-     *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $name
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function inline_open_secure($action = null, $method = 'POST', $attributes = array())
+    public function textarea($name, $value = null, $attributes = array())
     {
-        return static::inline_open($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_CONTROL . ' ' . $attributes['class'] :
+            self::FORM_CONTROL;
+
+        return parent::textarea($name, $value, $attributes);
     }
 
     /**
-     * Open a HTML form styled as an inline form for files.
-     *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param string $name
+     * @param array  $attributes
      * @return string
      */
-    public static function inline_open_for_files($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function password($name, $attributes = array())
     {
-        $attributes['enctype'] = 'multipart/form-data';
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_CONTROL . ' ' . $attributes['class'] :
+            self::FORM_CONTROL;
 
-        return static::inline_open($action, $method, $attributes, $https);
+        return parent::password($name, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled as an inline form for files.
-     *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $name
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function inline_open_secure_for_files($action = null, $method = 'POST', $attributes = array())
+    public function text($name, $value = null, $attributes = array())
     {
-        return static::inline_open_for_files($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_CONTROL . ' ' . $attributes['class'] :
+            self::FORM_CONTROL;
+
+        return parent::text($name, $value, $attributes);
     }
 
     /**
-     * Open a HTML form styled for a horizontal form.
-     *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param string $name
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function horizontal_open($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function email($name, $value = null, $attributes = array())
     {
-        $attributes = Helpers::add_class($attributes, Form::TYPE_HORIZONTAL);
+        $attributes['class'] = isset($attributes['class']) ?
+            self::FORM_CONTROL . ' ' . $attributes['class'] :
+            self::FORM_CONTROL;
 
-        return static::open($action, $method, $attributes, $https);
+        return parent::email($name, $value, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled for a horizontal form.
+     * Creates a datetime form element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
+     * @param string $name       The name of the element
+     * @param null   $value      The value
+     * @param array  $attributes The attributes
+     * @return string
+     * @see Illuminate\FormBuilder\input()
+     */
+    public function datetime($name, $value = null, $attributes = array())
+    {
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('datetime', $name, $value, $attributes);
+    }
+
+    /**
+     * Creates a datetime local element
      *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
+     * @return string
+     * @see Illuminate\FormBuilder\input()
+     */
+    public function datetimelocal($name, $value = null, $attributes = array())
+    {
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('datetime-local', $name, $value, $attributes);
+    }
+
+    /**
+     * Creates a date input
+     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function horizontal_open_secure($action = null, $method = 'POST', $attributes = array())
+    public function date($name, $value = null, $attributes = array())
     {
-        return static::horizontal_open($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('date', $name, $value, $attributes);
     }
 
     /**
-     * Open a HTML form styled for a horizontal form for files upload.
+     * Creates a month input
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function horizontal_open_for_files($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function month($name, $value = null, $attributes = array())
     {
-        $attributes['enctype'] = 'multipart/form-data';
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
 
-        return static::horizontal_open($action, $method, $attributes, $https);
+        return parent::input('month', $name, $value, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled for a horizontal form for files upload.
+     * Creates a week form element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function horizontal_open_secure_for_files($action = null, $method = 'POST', $attributes = array())
+    public function week($name, $value = null, $attributes = array())
     {
-        return static::horizontal_open_for_files($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('week', $name, $value, $attributes);
     }
 
     /**
-     * Open a HTML form styled for a vertical form.
+     * Creates a time form element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function vertical_open($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function time($name, $value = null, $attributes = array())
     {
-        return static::open($action, $method, $attributes, $https);
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('time', $name, $value, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled for a vertical form.
+     * Creates a number form element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function vertical_open_secure($action = null, $method = 'POST', $attributes = array())
+    public function number($name, $value = null, $attributes = array())
     {
-        return static::vertical_open($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('number', $name, $value, $attributes);
     }
 
     /**
-     * Open a HTML form styled for a vertical form for files upload.
+     * Creates a url form element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     * @param bool   $https      make for secure
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function vertical_open_for_files($action = null, $method = 'POST', $attributes = array(), $https = null)
+    public function url($name, $value = null, $attributes = array())
     {
-        $attributes['enctype'] = 'multipart/form-data';
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
 
-        return static::vertical_open($action, $method, $attributes, $https);
+        return parent::input('url', $name, $value, $attributes);
     }
 
     /**
-     * Open a secure HTML form styled for a vertical form for files upload.
+     * Creates a search element
      *
-     * @param string $action     form action
-     * @param string $method     form method type
-     * @param array  $attributes array of attributes for form
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function vertical_open_secure_for_files($action = null, $method = 'POST', $attributes = array())
+    public function search($name, $value = null, $attributes = array())
     {
-        return static::vertical_open_for_files($action, $method, $attributes, true);
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
+
+        return parent::input('search', $name, $value, $attributes);
     }
 
     /**
-     * Create a HTML span tag with the bootstrap help-inline class.
+     * Creates a tel element
      *
-     * @param string $value      value of help text
-     * @param array  $attributes attributes for help span
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function inline_help($value, $attributes = array())
+    public function tel($name, $value = null, $attributes = array())
     {
-        $attributes = Helpers::add_class($attributes, 'help-inline');
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
 
-        return '<span'.HTML::attributes($attributes).'>'.$value.'</span>';
+        return parent::input('tel', $name, $value, $attributes);
     }
 
     /**
-     * Create a HTML p tag with the bootstrap help-block class.
+     * Creates a color element
      *
-     * @param string $value      value of help text
-     * @param array  $attributes attributes for help span
-     *
+     * @param string $name The name of the element
+     * @param null   $value
+     * @param array  $attributes
      * @return string
      */
-    public static function block_help($value, $attributes = array())
+    public function color($name, $value = null, $attributes = array())
     {
-        $attributes = Helpers::add_class($attributes, 'help-block');
+        $attributes['class'] = isset($attributes['class']) ? self::FORM_CONTROL . ' ' . $attributes['class'] : self::FORM_CONTROL;
 
-        return '<p'.HTML::attributes($attributes).'>'.$value.'</p>';
+        return parent::input('color', $name, $value, $attributes);
     }
 
-    /**
-     * Create a bootstrap control group.
-     * $label, $control, and $help expect a fully formed HTML
-     * from Laravel\Form
-     *
-     * @param string $label       html of the label for the group
-     * @param string $control     html of the control for the group
-     * @param string $group_class extra classes for the group
-     * @param string $help        help value for the group
-     *
-     * @return string
-     */
-    public static function control_group($label, $control, $group_class = '', $help = null)
-    {
-        $class = 'control-group';
-
-        if ($group_class !== '') {
-            $class .= ' '.$group_class;
-        }
-
-        $html = '<div class="'.$class.'">';
-        $html .= static::add_attribute('class', 'control-label', $label);
-        $html .= '<div class="controls">';
-
-        $html .= $control;
-
-        if (isset($help)) {
-            $html .= $help;
-        }
-
-        $html .= '</div></div>';
-
-        return $html;
-    }
-
-    /**
-     * Create a HTML checkbox input element with a label.
-     * Uses the standard checkbox function.
-     *
-     * @param string $name       name attribute of the checkbox
-     * @param string $label      label text
-     * @param string $value      value of the checkbox
-     * @param bool   $checked    is checked
-     * @param array  $attributes attributes for label
-     *
-     * @return string
-     * @see Laravel\Form::checkbox()
-     */
-    public static function labelled_checkbox($name, $label, $value = 1, $checked = false, $attributes = array())
-    {
-        return '<label class="checkbox">'.static::checkbox($name, $value, $checked, $attributes).' '.$label.'</label>';
-    }
-
-    /**
-     * Create a HTML checkbox input element with a label.
-     * Uses the standard checkbox function.
-     *
-     * @param string $name       name attribute of the checkbox
-     * @param string $label      label text
-     * @param string $value      value of the checkbox
-     * @param bool   $checked    is checked
-     * @param array  $attributes attributes for label
-     *
-     * @return string
-     * @see Laravel\Form::checkbox()
-     */
-    public static function inline_labelled_checkbox($name, $label, $value = 1, $checked = false, $attributes = array())
-    {
-        return '<label class="checkbox inline">'.static::checkbox($name, $value, $checked, $attributes).' '.$label.'</label>';
-    }
-
-    /**
-     * Create a HTML radio input element with a label.
-     * Uses the standard radio function.
-     *
-     * @param string $name       name attribute of the radio
-     * @param string $label      label text
-     * @param string $value      value of the radio
-     * @param bool   $checked    is checked
-     * @param array  $attributes attributes for label
-     *
-     * @return string
-     * @see Laravel\Form::radio()
-     */
-    public static function labelled_radio($name, $label, $value = 1, $checked = false, $attributes = array())
-    {
-        return '<label class="radio">'.static::radio($name, $value, $checked, $attributes).' '.$label.'</label>';
-    }
-
-    /**
-     * Create a HTML radio input element with a label.
-     * Uses the standard radio function.
-     *
-     * @param string $name       name attribute of the radio
-     * @param string $label      label text
-     * @param string $value      value of the radio
-     * @param bool   $checked    is checked
-     * @param array  $attributes attributes for label
-     *
-     * @return string
-     * @see Laravel\Form::radio()
-     */
-    public static function inline_labelled_radio($name, $label, $value = 1, $checked = false, $attributes = array())
-    {
-        return '<label class="radio inline">'.static::radio($name, $value, $checked, $attributes).' '.$label.'</label>';
-    }
-
-    /**
-     * Create a HTML select element with multiple select.
-     *
-     * @param string $name       name of the select menu
-     * @param array  $options    array of options
-     * @param string $selected   selected values
-     * @param array  $attributes attributes for select menu
-     *
-     * @return string
-     */
-    public static function multiselect($name, $options = array(), $selected = null, $attributes = array())
-    {
-        $attributes['multiple'] = 'multiple';
-
-        return static::select($name, $options, $selected, $attributes);
-    }
-
-    /**
-     * Create a HTML for an uneditable control
-     *
-     * @param string $value      value of uneditable control
-     * @param array  $attributes attributes for control
-     *
-     * @return string
-     */
-    public static function uneditable($value, $attributes = array())
-    {
-        $attributes = Helpers::add_class($attributes, 'uneditable-input');
-
-        return '<span'.HTML::attributes($attributes).'>'.HTML::entities($value).'</span>';
-    }
-
-    /**
-     * Create a file input with the Bootstrap input-file class.
-     *
-     * @param string $name       name of the file control
-     * @param array  $attributes attributes for control
-     *
-     * @return string
-     * @see Laravel\Form::file()
-     */
-    public static function file($name, $attributes = array())
-    {
-        $attributes = Helpers::add_class($attributes, 'input-file');
-
-        return parent::file($name, $attributes);
-    }
-
-    /**
-     * Create a text box with the search-query class.
-     *
-     * @param string $name       name of the textbox
-     * @param string $value      value of textbox
-     * @param array  $attributes attributes for control
-     *
-     * @return string
-     * @see Laravel\Form::text()
-     */
-    public static function search_box($name, $value = null, $attributes = array())
-    {
-        $attributes = Helpers::add_class($attributes, 'search-query');
-
-        return static::text($name, $value, $attributes);
-    }
-
-    /**
-     * Create a group of form actions (buttons).
-     *
-     * @param mixed $buttons String or array of HTML buttons.
-     *
-     * @return string
-     */
-    public static function actions()
-    {
-        // Fetch arguments
-        $buttons = func_get_args();
-        if(sizeof($buttons) == 1) $buttons = $buttons[0];
-
-        $html  = '<div class="form-actions">';
-        $html .= is_array($buttons) ? implode(' ', $buttons) : $buttons;
-        $html .= '</div>';
-
-        return $html;
-    }
-
-    /**
-     * Create an input control with a prepended string.
-     *
-     * @param string $control control that should have a prepended value
-     * @param string $value   value to prepend to control
-     *
-     * @return string
-     */
-    public static function prepend($control, $value)
-    {
-        return '<div class="input-prepend"><span class="add-on">'.$value.'</span>'.$control.'</div>';
-    }
-
-    /**
-     * Create an input control with an appended string.
-     *
-     * @param string $control control that should have an appended value
-     * @param string $value   value to append to control
-     *
-     * @return string
-     */
-    public static function append($control, $value)
-    {
-        return '<div class="input-append">'.$control.'<span class="add-on">'.$value.'</span></div>';
-    }
-
-    /**
-     * Create an input control with a prepended and appended string.
-     *
-     * @param string $control    control between values
-     * @param string $pre_value  prepended value
-     * @param string $post_value appeneded value
-     *
-     * @return string
-     */
-    public static function prepend_append($control, $pre_value, $post_value)
-    {
-        return '<div class="input-prepend input-append"><span class="add-on">'.$pre_value.'</span>'.$control.'<span class="add-on">'.$post_value.'</span></div>';
-    }
-
-    /**
-     * Create an input control with a series of appended buttons.
-     *
-     * @param string $control control to append buttons to
-     * @param mixed  $buttons html or array of html buttons
-     *
-     * @return string
-     */
-    public static function append_buttons($control, $buttons)
-    {
-        $value = is_array($buttons) ? implode('', $buttons) : $buttons;
-
-        return '<div class="input-append">'.$control.$value.'</div>';
-    }
-
-    /**
-     * Create a HTML submit input element.
-     * Overriding the default input submit button from Laravel\Form
-     *
-     * @param string $value       text value of button
-     * @param array  $attributes  array of attributes for button
-     * @param bool   $hasDropdown button has dropdown
-     *
-     * @return string
-     */
-    public static function submit($value = null, $attributes = array(), $hasDropdown = false)
-    {
-        return Button::submit($value, $attributes, $hasDropdown);
-    }
-
-    /**
-     * Create a HTML reset input element.
-     * Overriding the default input reset button from Laravel\Form
-     *
-     * @param string $value       text value of button
-     * @param array  $attributes  array of attributes for button
-     * @param bool   $hasDropdown button has dropdown
-     *
-     * @return string
-     */
-    public static function reset($value = null, $attributes = array(), $hasDropdown = false)
-    {
-        return Button::reset($value, $attributes, $hasDropdown);
-    }
-
-    /**
-     * Create a HTML button element.
-     * Overriding the default button to add the correct class from Laravel\Form
-     *
-     * @param string $value       text value of button
-     * @param array  $attributes  array of attributes for button
-     * @param bool   $hasDropdown button has dropdown
-     *
-     * @return string
-     */
-    public static function button($value = null, $attributes = array(), $hasDropdown = false)
-    {
-        return Button::normal($value, $attributes, $hasDropdown);
-    }
-
-    /**
-     * Dynamically handle calls to custom calls.
-     *
-     * @param string $method     Name of missing method
-     * @param array  $parameters array of parameters passed to missing method
-     *
-     * @return mixed
-     */
-    public static function __callStatic($method, $parameters)
-    {
-        $in = static::magic_input($method, $parameters);
-        if ($in !== null) {
-            return $in;
-        }
-
-        return parent::__callStatic($method, $parameters);
-    }
 }

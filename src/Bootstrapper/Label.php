@@ -1,142 +1,178 @@
 <?php
+
 namespace Bootstrapper;
 
-use \HTML;
-
 /**
- * Label for creating Twitter Bootstrap style Labels.
+ * Creates bootstrap 3 compliant labels
  *
- * @category   HTML/UI
- * @package    Boostrapper
- * @subpackage Twitter
- * @author     Patrick Talmadge - <ptalmadge@gmail.com>
- * @author     Maxime Fabre - <ehtnam6@gmail.com>
- * @license    MIT License <http://www.opensource.org/licenses/mit>
- * @link       http://laravelbootstrapper.phpfogapp.com/
- *
- * @see        http://twitter.github.com/bootstrap/
+ * @package Bootstrapper
  */
-class Label
+class Label extends RenderedObject
 {
-    /**
-     * Label colors
-     * @var constant
-     */
-    const NORMAL    = '';
-    const IMPORTANT = 'label-important';
-    const INFO      = 'label-info';
-    const INVERSE   = 'label-inverse';
-    const SUCCESS   = 'label-success';
-    const WARNING   = 'label-warning';
 
     /**
-     * Create a new Label
-     *
-     * @param string $type       Label type
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * Constant for primary labels
      */
-    protected static function show($type = Label::NORMAL, $message, $attributes = array())
+    const LABEL_PRIMARY = 'label-primary';
+
+    /**
+     * Constant for success labels
+     */
+    const LABEL_SUCCESS = 'label-success';
+
+    /**
+     * Constant for info labels
+     */
+    const LABEL_INFO = 'label-info';
+
+    /**
+     * Constant for warning labels
+     */
+    const LABEL_WARNING = 'label-warning';
+
+    /**
+     * Constant for danger labels
+     */
+    const LABEL_DANGER = 'label-danger';
+
+    /**
+     * Constant for default labels
+     */
+    const LABEL_DEFAULT = 'label-default';
+
+    /**
+     * @var string The type of the label
+     */
+    protected $type = 'label-default';
+
+    /**
+     * @var string The contents of the label
+     */
+    protected $contents;
+
+    /**
+     * @return string Renders the label
+     */
+    public function render()
     {
-        $attributes = Helpers::add_class($attributes, 'label '.$type);
-
-        return '<span'.HTML::attributes($attributes).'>'.$message.'</span>';
+        return "<span class='label {$this->type}'>{$this->contents}</span>";
     }
 
     /**
-     * Create a new Normal Label
+     * Sets the contents of the label
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The new contents of the label
+     * @return $this
      */
-    public static function normal($message, $attributes = array())
+    public function withContents($contents)
     {
-        return static::show(Label::NORMAL, $message, $attributes);
+        $this->contents = $contents;
+
+        return $this;
     }
 
     /**
-     * Create a new Success Label
+     * Sets the type of the label. Assumes that the label- prefix is already set
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $type The new type
+     * @return $this
      */
-    public static function success($message, $attributes = array())
+    public function setType($type)
     {
-        return static::show(Label::SUCCESS, $message, $attributes);
+        $this->type = $type;
+
+        return $this;
     }
 
     /**
-     * Create a new Warning Label
+     * Creates a primary label
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The contents of the label
+     * @return $this
      */
-    public static function warning($message, $attributes = array())
+    public function primary($contents = '')
     {
-        return static::show(Label::WARNING, $message, $attributes);
+        $this->setType(self::LABEL_PRIMARY);
+
+        return $this->withContents($contents);
     }
 
     /**
-     * Create a new Important Label
+     * Creates a success label
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The contents of the label
+     * @return $this
      */
-    public static function important($message, $attributes = array())
+    public function success($contents = '')
     {
-        return static::show(Label::IMPORTANT, $message, $attributes);
+        $this->setType(self::LABEL_SUCCESS);
+
+        return $this->withContents($contents);
     }
 
     /**
-     * Create a new Info Label instance
+     * Creates an info label
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The contents of the label
+     * @return $this
      */
-    public static function info($message, $attributes = array())
+    public function info($contents = '')
     {
-        return static::show(Label::INFO, $message, $attributes);
+        $this->setType(self::LABEL_INFO);
+
+        return $this->withContents($contents);
     }
 
     /**
-     * Create a new Inverse Label
+     * Creates a warning label
      *
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The contents of the label
+     * @return $this
      */
-    public static function inverse($message, $attributes = array())
+    public function warning($contents = '')
     {
-        return static::show(Label::INVERSE, $message, $attributes);
+        $this->setType(self::LABEL_WARNING);
+
+        return $this->withContents($contents);
     }
 
     /**
-     * Create a new custom Label
-     * This assumes you have created the appropriate css class for the label type.
+     * Creates a danger label
      *
-     * @param string $type       Label type
-     * @param string $message    Label text
-     * @param array  $attributes Attributes to apply the label itself
-     *
-     * @return string Label HTML
+     * @param string $contents The contents of the label
+     * @return $this
      */
-    public static function custom($type, $message, $attributes = array())
+    public function danger($contents = '')
     {
-        $type = 'label-'.(string) $type;
+        $this->setType(self::LABEL_DANGER);
 
-        return static::show($type, $message, $attributes);
+        return $this->withContents($contents);
+    }
+
+    /**
+     * Creates a label
+     *
+     * @param string $contents The contents of the label
+     * @param string $type     The type to use
+     * @return $this
+     */
+    public function create($contents, $type = self::LABEL_DEFAULT)
+    {
+        $this->setType($type);
+
+        return $this->withContents($contents);
+    }
+
+    /**
+     * Creates a normal label
+     *
+     * @param string $contents The contents of the label
+     * @return $this
+     */
+    public function normal($contents = '')
+    {
+        $this->setType(self::LABEL_DEFAULT);
+
+        return $this->withContents($contents);
     }
 }

@@ -1,93 +1,249 @@
 <?php
+
 namespace Bootstrapper;
 
-use \HTML;
-
 /**
- * ButtonGroup for creating Twitter Bootstrap style Buttons groups.
+ * Creates Bootstrap 3 compliant Button Groups
  *
- * @category   HTML/UI
- * @package    Boostrapper
- * @subpackage Twitter
- * @author     Patrick Talmadge - <ptalmadge@gmail.com>
- * @author     Maxime Fabre - <ehtnam6@gmail.com>
- * @license    MIT License <http://www.opensource.org/licenses/mit>
- * @link       http://laravelbootstrapper.phpfogapp.com/
- *
- * @see        http://twitter.github.com/bootstrap/
+ * @package Bootstrapper
  */
-class ButtonGroup
+class ButtonGroup extends RenderedObject
 {
+
     /**
-     * Puts the ButtonGroup in a checkbox mode.
-     *
-     * @var string
+     * @var array The contents of the button group
      */
-    const TOGGLE_CHECKBOX = 'checkbox';
+    protected $contents = [];
 
     /**
-     * Puts the ButtonGroup in a radio button mode. Allowing only
-     * one button to be selected at a time.
-     *
-     * @var string
+     * @var string The type of the button
      */
-    const TOGGLE_RADIO = 'radio';
+    protected $type = 'button';
 
     /**
-     * Opens a vertical button group
-     *
-     * @param boolean $toggle     Whether the button group should be togglable
-     * @param array   $attributes An array of attributes
-     *
-     * @return string An opening <div> tag
+     * @var bool Whether the dropdown should be vertical or not
      */
-    public static function vertical_open($toggle = null, $attributes = array())
-    {
-        $attributes = Helpers::add_class($attributes, 'btn-group-vertical');
-
-        return static::open($toggle, $attributes);
-    }
+    protected $vertical = false;
 
     /**
-     * Alias for open so both horizontal_open and open can be used.
-     *
-     * @param boolean $toggle     Whether the button group should be togglable
-     * @param array   $attributes An array of attributes
-     *
-     * @return string An opening <div> tag
+     * @var The size of the button
      */
-    public static function horizontal_open($toggle = null, $attributes = array())
-    {
-        return static::open($toggle, $attributes);
-    }
+    protected $size;
 
     /**
-     * Opens a new ButtonGroup section.
-     *
-     * @param string $toggle     Whether the button group should be togglable
-     * @param array  $attributes An array of attributes
-     *
-     * @return string An opening <div> tag
+     * Constant for large button groups
      */
-    public static function open($toggle = null, $attributes = array())
-    {
-        $validToggles = array(ButtonGroup::TOGGLE_CHECKBOX, ButtonGroup::TOGGLE_RADIO);
-        if (isset($toggle) && in_array($toggle, $validToggles)) {
-            $attributes['data-toggle'] = 'buttons-'.$toggle;
-        }
-
-        $attributes = Helpers::add_class($attributes, 'btn-group');
-
-        return '<div'.HTML::attributes($attributes).'>';
-    }
+    const LARGE = 'btn-group-lg';
 
     /**
-     * Closes the ButtonGroup section.
+     * Constant for small button groups
+     */
+    const SMALL = 'btn-group-sm';
+
+    /**
+     * Constant for extra small button groups
+     */
+    const EXTRA_SMALL = 'btn-group-xs';
+
+    /**
+     * Constant for normal buttons
+     */
+    const NORMAL = 'btn-default';
+
+    /**
+     * Constant for primary buttons
+     */
+    const PRIMARY = 'btn-primary';
+
+    /**
+     * Constant for success buttons
+     */
+    const SUCCESS = 'btn-success';
+
+    /**
+     * Constant for info buttons
+     */
+    const INFO = 'btn-info';
+
+    /**
+     * Constant for warning buttons
+     */
+    const WARNING = 'btn-warning';
+
+    /**
+     * Constant for danger buttons
+     */
+    const DANGER = 'btn-danger';
+
+    /**
+     * Constant for radio buttons
+     */
+    const RADIO = 'radio';
+
+    /**
+     * Constant for checkbox buttons
+     */
+    const CHECKBOX = 'checkbox';
+
+    /**
+     * Renders the button group
      *
      * @return string
      */
-    public static function close()
+    public function render()
     {
-        return '</div>';
+        $attributes = new Attributes(
+            [
+                'class' => $this->vertical ? 'btn-group-vertical' : 'btn-group',
+                'data-toggle' => 'buttons'
+            ]
+        );
+
+        if ($this->size) {
+            $attributes->addClass($this->size);
+        }
+
+        $contents = $this->renderContents();
+
+        return "<div {$attributes}>{$contents}</div>";
     }
+
+    /**
+     * Sets the size of the button group
+     *
+     * @param $size
+     */
+    public function setSize($size)
+    {
+        $this->size = $size;
+    }
+
+    /**
+     * Sets the button group to be large
+     *
+     * @return $this
+     */
+    public function large()
+    {
+        $this->setSize(self::LARGE);
+
+        return $this;
+    }
+
+    /**
+     * Sets the button group to be small
+     *
+     * @return $this
+     */
+    public function small()
+    {
+        $this->setSize(self::SMALL);
+
+        return $this;
+    }
+
+    /**
+     * Sets the button group to be extra small
+     *
+     * @return $this
+     */
+    public function extraSmall()
+    {
+        $this->setSize(self::EXTRA_SMALL);
+
+        return $this;
+    }
+
+    /**
+     * Sets the button group to be radio
+     *
+     * @param array $contents
+     * @return $this
+     */
+    public function radio(array $contents)
+    {
+        return $this->asType(self::RADIO)->withContents($contents);
+    }
+
+    /**
+     * Sets the button group to be a checkbox
+     *
+     * @param array $contents
+     * @return $this
+     */
+    public function checkbox(array $contents)
+    {
+        return $this->asType(self::CHECKBOX)->withContents($contents);
+    }
+
+    /**
+     * Sets the contents of the button group
+     *
+     * @param array $contents
+     * @return $this
+     */
+    public function withContents(array $contents)
+    {
+        $this->contents = $contents;
+
+        return $this;
+    }
+
+    /**
+     * Sets the button group to be vertical
+     *
+     * @return $this
+     */
+    public function vertical()
+    {
+        $this->vertical = true;
+
+        return $this;
+    }
+
+    /**
+     * Sets the type of the button group
+     *
+     * @param $type
+     * @return $this
+     */
+    public function asType($type)
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * Renders the contents of the button group
+     *
+     * @return string
+     */
+    public function renderContents()
+    {
+        $contents = '';
+
+        if ($this->type == 'button') {
+            foreach ($this->contents as $item) {
+                $contents .= $item;
+            }
+        } else {
+            foreach ($this->contents as $item) {
+                if ($item instanceof Button) {
+                    $class = $item->getType();
+                    $value = $item->getValue();
+                    $attributes = new Attributes(
+                        $item->getAttributes(),
+                        ['type' => $this->type]
+                    );
+                    $contents .= "<label class='btn {$class}'><input {$attributes}>{$value}</label>";
+                } else {
+                    $contents .= $item;
+                }
+            }
+        }
+
+        return $contents;
+    }
+
 }
