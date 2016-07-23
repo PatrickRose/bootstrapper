@@ -164,6 +164,7 @@ class Table extends RenderedObject
 
         $string = '<thead><tr>';
         foreach ($headers as $heading) {
+            $heading = $this->aliases && array_key_exists($heading, $this->aliases) ? $this->aliases[$heading] : $heading;
             $string .= "<th>{$heading}</th>";
         }
         $string .= '</tr></thead>';
@@ -213,10 +214,9 @@ class Table extends RenderedObject
             }
 
             if (!in_array($key, $headers)) {
-                $headers[] = $this->aliases && array_key_exists($key, $this->aliases) ? $this->aliases[$key] : $key;
+                $headers[] = $key;
             }
         }
-
         return $headers;
     }
 
