@@ -56,6 +56,11 @@ class Table extends RenderedObject
     protected $only = false;
 
     /**
+     * @var bool|array An array of aliases of columns. False if none.
+     */
+    protected $aliases = false;
+
+    /**
      * Renders the table
      *
      * @return string
@@ -159,6 +164,7 @@ class Table extends RenderedObject
 
         $string = '<thead><tr>';
         foreach ($headers as $heading) {
+            $heading = $this->aliases && array_key_exists($heading, $this->aliases) ? $this->aliases[$heading] : $heading;
             $string .= "<th>{$heading}</th>";
         }
         $string .= '</tr></thead>';
@@ -211,7 +217,6 @@ class Table extends RenderedObject
                 $headers[] = $key;
             }
         }
-
         return $headers;
     }
 
@@ -276,6 +281,19 @@ class Table extends RenderedObject
     public function only(array $only)
     {
         $this->only = $only;
+
+        return $this;
+    }
+
+    /**
+     * Sets columns aliases
+     *
+     * @param array $only
+     * @return $this
+     */
+    public function alias(array $aliases)
+    {
+        $this->aliases = $aliases;
 
         return $this;
     }
